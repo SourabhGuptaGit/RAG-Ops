@@ -1,0 +1,6 @@
+fastapi
+inngest
+dotenv
+uvicorn[standard]
+qdrant-client
+llama-index

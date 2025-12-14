@@ -1,0 +1,15 @@
+[project]
+name = "rag-ops"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "dotenv>=0.9.9",
+    "fastapi>=0.124.4",
+    "inngest>=0.5.13",
+    "llama-index>=0.14.10",
+    "openai>=2.11.0",
+    "qdrant-client>=1.16.2",
+    "uvicorn[standard]>=0.38.0",
+]
