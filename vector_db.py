@@ -1,6 +1,7 @@
 from qdrant_client import QdrantClient
 from qdrant_client.models import VectorParams, Distance, PointStruct
 from qdrant_client.http.exceptions import UnexpectedResponse
+from custom_types import RAGSearchResult, RAGUpsertResult
 
 
 class QdrantStorage:
@@ -20,7 +21,7 @@ class QdrantStorage:
         points = [PointStruct(id=ids[i], vector=vectors[i], payload=payloads[i]) for i in range(len(ids))]
         self.client.upsert(self.collection, points=points)
         
-    def search(self, query_vector, top_k: int = 5):
+    def search(self, query_vector, top_k: int = 5) -> RAGSearchResult:
         results = self.client.query_points(
             collection_name=self.collection,
             query=query_vector,
@@ -37,4 +38,5 @@ class QdrantStorage:
             if text:
                 contexts.append(text)
                 sources.add(source)
-        return {"contexts": contexts, "sources": list(sources)}
+        # return {"contexts": contexts, "sources": list(sources)}
+        return RAGSearchResult(contexts=contexts, sources=list(sources))
