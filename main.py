@@ -8,6 +8,8 @@ import os
 import logging
 import datetime
 
+from qdrant_client import QdrantClient
+
 from data_loader import load_and_chunk_pdf
 from vector_db import QdrantStorage
 from custom_types import RAGChunkAndSrc, RAGUpsertResult, RAGSearchResult, RAGQueryResult
@@ -72,14 +74,14 @@ async def rag_query_pdf_ai(context: inngest.Context) -> RAGSearchResult:
     
     context_block = "\n\n".join(f"- {c}" for c in results.contexts)
     user_content = (
-        f"Use the following context to anwser the question.\n"
-        f"Context:\n{context_block}\n"
-        f"Question:\n{question}\n"
-        f"Anwser concisevly using the conext above."
+        "Use the following context to answer the question.\n\n"
+        f"Context:\n{context_block}\n\n"
+        f"Question:\n{question}\n\n"
+        "Answer concisely using only the context above."
     )
     
     adapter = ai.openai.Adapter(
-        auth_key=os.getenv("OPANAI_API_KEY"),
+        auth_key=os.getenv("OPENAI_API_KEY"),
         model="gpt-4o-mini"
     )
     
@@ -90,16 +92,22 @@ async def rag_query_pdf_ai(context: inngest.Context) -> RAGSearchResult:
             "max_tokens": 1024,
             "temperature": 0.2,
             "messages":[
-                {"role": "system", "context": "You are an Q/A agent, anwser to questions using only the provided context."},
-                {"role": "user", "context": user_content}
+                {"role": "system", "content": "You are an Q/A agent, anwser to questions using only the provided context."},
+                {"role": "user", "content": user_content}
             ]
         }
     )
-    anwser = response.get("choices")[0].get("message").get("context").strip()
-    
+    anwser = response.get("choices")[0].get("message").get("content").strip()
+    print(f"[QDRANT] Context found {results.contexts} \nTotal context len - {len(results.contexts)}")
     return {"anwser": anwser, "context": results.sources, "total_contexts": len(results.contexts)}
 
 
 app = FastAPI()
+
+@app.get("/debug/qdrant")
+def debug_qdrant():
+    client = QdrantClient(url="http://localhost:6333")
+    return client.get_collection("docs")
+
 
 inngest.fast_api.serve(app=app, client=inngest_client, functions=[rag_ingest_pdf, rag_query_pdf_ai])
